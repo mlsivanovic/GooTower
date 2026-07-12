@@ -46,10 +46,11 @@ function startLevel(index) {
   // početna konstrukcija
   const pts = level.initial.nodes.map(([x, y]) => game.world.addPoint(x, y));
   for (const [i, j] of level.initial.struts) game.world.addStrut(pts[i], pts[j]);
+  if (level.initial.fixed) for (const i of level.initial.fixed) pts[i].pinned = true;
 
-  // slobodne kuglice — rasporedi ih po početnim gredama
+  // slobodne kuglice — rasporedi ih po početnim gredama (ako ih ima)
   const struts = game.world.struts;
-  for (let i = 0; i < level.total; i++) {
+  for (let i = 0; struts.length && i < level.total; i++) {
     const s = struts[i % struts.length];
     const t = Math.random();
     const b = new GooBall(
@@ -171,6 +172,47 @@ function updateParticles(dt) {
   game.particles = game.particles.filter(p => p.life > 0);
 }
 
+// ---------- Šiljci / sečiva ----------
+
+function checkHazards() {
+  const hz = game.level.hazards;
+  if (!hz || !hz.length) return;
+  const touch = GOO.radius * 0.55;
+
+  // slobodne (i držane) kuglice — dodir = kraj
+  for (const b of game.balls) {
+    if (!['crawl', 'walk', 'falling', 'held'].includes(b.state)) continue;
+    for (const h of hz) {
+      if (dist(b.x, b.y, h.x, h.y) < h.r + touch) {
+        b.state = 'lost';
+        if (b === game.held) game.held = null;
+        break;
+      }
+    }
+  }
+
+  // čvorovi konstrukcije — sečivo ih otkida (fiksni oslonci su otporni)
+  const dead = [];
+  for (const p of game.world.points) {
+    if (p.pinned) continue;
+    for (const h of hz) {
+      if (dist(p.x, p.y, h.x, h.y) < h.r + touch) { dead.push(p); break; }
+    }
+  }
+  for (const p of dead) destroyNode(p);
+}
+
+function destroyNode(p) {
+  spawnParticles(p.x, p.y, '#3a3a42', 10);
+  const removed = game.world.strutsAt(p);
+  for (const b of game.balls) {
+    if (b.strut && removed.includes(b.strut)) b.detachToFalling();
+  }
+  game.world.struts = game.world.struts.filter(s => s.a !== p && s.b !== p);
+  game.world.points = game.world.points.filter(x => x !== p);
+  sfx.lost();
+}
+
 // ---------- Cev i kraj nivoa ----------
 
 function updatePipe(dt) {
@@ -280,6 +322,7 @@ function tick(dt) {
 
   world.step(dt);
   for (const b of game.balls) b.update(dt, world, level);
+  if (game.state === 'playing') checkHazards();
   const lost = game.balls.filter(b => b.state === 'lost');
   if (lost.length) {
     for (const b of lost) spawnParticles(b.x, Math.min(b.y, level.killY), '#222', 6);
@@ -338,6 +381,7 @@ function draw() {
 
   const look = { x: game.pointer.x, y: game.pointer.y };
   for (const b of game.balls) R.drawBall(ctx, b, look, game.time);
+  if (game.level.hazards) R.drawHazards(ctx, game.level.hazards, game.time);
   R.drawParticles(ctx, game.particles);
 
   ctx.restore();

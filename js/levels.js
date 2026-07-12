@@ -194,4 +194,142 @@ export const LEVELS = [
     ground: '#3a1e18',
     groundTop: '#5a2e22',
   },
+  {
+    // inspirisano: "Tower of Goo" — klasična visoka kula
+    id: 'kula-od-kuglica',
+    name: 'Kula od kuglica',
+    sub: 'Klasik: gradi visoku kulu do cevi u oblacima.',
+    required: 13,
+    total: 28,
+    platforms: [
+      { x: -200, y: 660, w: 1680, h: 260 },
+    ],
+    killY: 1000,
+    wind: 45,
+    pipe: { x: 640, y: 118, dir: 'down' },
+    initial: {
+      nodes: [[560, 645], [720, 645], [640, 548]],
+      struts: [[0, 1], [0, 2], [1, 2]],
+    },
+    sky: ['#7ec8e3', '#cfeecf'],
+    hills: [
+      { color: '#8fbf6a', y: 560, amp: 55, freq: 1.6 },
+      { color: '#6ca84f', y: 610, amp: 35, freq: 2.3 },
+    ],
+    ground: '#4a7a35',
+    groundTop: '#5d9442',
+  },
+  {
+    // inspirisano: "Impale Sticky" — provlačenje pored sečiva
+    id: 'nabij-na-trn',
+    name: 'Nabij na trn',
+    sub: 'Provuci konstrukciju kroz procep — sečivo = kraj.',
+    required: 8,
+    total: 20,
+    platforms: [
+      { x: -200, y: 660, w: 1680, h: 260 },
+      { x: 250, y: 520, w: 150, h: 140 },    // pijedestal (polazna greda)
+    ],
+    killY: 1000,
+    pipe: { x: 905, y: 485, dir: 'left' },
+    hazards: [
+      { x: 610, y: 405, r: 40 },            // gornje sečivo
+      { x: 610, y: 565, r: 40 },            // donje sečivo (procep između njih)
+    ],
+    initial: {
+      nodes: [[285, 505], [375, 505], [330, 412]],
+      struts: [[0, 1], [0, 2], [1, 2]],
+    },
+    sky: ['#9ad0c0', '#dff0d0'],
+    hills: [
+      { color: '#5aa885', y: 545, amp: 52, freq: 1.5 },
+      { color: '#3f8062', y: 600, amp: 34, freq: 2.2 },
+    ],
+    ground: '#356b4a',
+    groundTop: '#478a5e',
+  },
+  {
+    // inspirisano: "Hang Low" — cev je dole, gradi naniže sa tavanice
+    id: 'visi-nisko',
+    name: 'Visi nisko',
+    sub: 'Cev je dole. Spusti se sa tavanice pravo do nje.',
+    required: 9,
+    total: 20,
+    platforms: [
+      { x: -200, y: -40, w: 1680, h: 200 },  // tavanica (donja ivica y=160)
+      { x: -200, y: 620, w: 1680, h: 300 },  // pod
+    ],
+    killY: 1050,
+    pipe: { x: 640, y: 560, dir: 'up' },
+    initial: {
+      nodes: [[560, 176], [720, 176], [640, 280]],
+      struts: [[0, 1], [0, 2], [1, 2]],
+      fixed: [0, 1],                         // zakovani za tavanicu
+    },
+    sky: ['#2a2f3a', '#4a5260'],
+    hills: [
+      { color: '#333a47', y: 560, amp: 40, freq: 1.4 },
+      { color: '#252b36', y: 610, amp: 28, freq: 2.0 },
+    ],
+    ground: '#1c2029',
+    groundTop: '#2b313d',
+  },
+  {
+    // inspirisano: vetroviti nivoi (WoG2) — vetar nosi konstrukciju
+    id: 'vetrometina',
+    name: 'Vetrometina',
+    sub: 'Jak vetar nosi kulu — pusti ga da te odnese do cevi.',
+    required: 10,
+    total: 24,
+    platforms: [
+      { x: -200, y: 660, w: 1680, h: 260 },
+    ],
+    killY: 1000,
+    wind: 300,
+    pipe: { x: 850, y: 250, dir: 'down' },
+    initial: {
+      nodes: [[300, 645], [420, 645], [360, 548]],
+      struts: [[0, 1], [0, 2], [1, 2]],
+    },
+    sky: ['#5a6072', '#9aa0b4'],
+    hills: [
+      { color: '#4a5064', y: 555, amp: 66, freq: 1.5 },
+      { color: '#363b4d', y: 610, amp: 42, freq: 2.1 },
+    ],
+    ground: '#2a2e3c',
+    groundTop: '#3c4152',
+  },
+  {
+    // inspirisano: "Cog in the Machine" — fabrika: jaz, šiljci, fiksni oslonci
+    id: 'zupcanik-u-masini',
+    name: 'Zupčanik u mašini',
+    sub: 'Most između oslonaca, iznad šiljaka i pored sečiva.',
+    required: 11,
+    total: 24,
+    platforms: [
+      { x: -200, y: 560, w: 500, h: 360 },   // leva obala (ivica x=300)
+      { x: 980, y: 560, w: 500, h: 360 },    // desna obala (ivica x=980)
+    ],
+    killY: 760,
+    pipe: { x: 1060, y: 435, dir: 'left' },
+    hazards: [
+      { x: 640, y: 470, r: 44 },             // sečivo na sredini mosta
+      { x: 420, y: 648, r: 34 },             // red šiljaka na dnu jaza
+      { x: 560, y: 648, r: 34 },
+      { x: 720, y: 648, r: 34 },
+      { x: 860, y: 648, r: 34 },
+    ],
+    initial: {
+      nodes: [[220, 545], [300, 545], [260, 448], [1000, 545]],
+      struts: [[0, 1], [0, 2], [1, 2]],
+      fixed: [3],                            // fiksni oslonac na desnoj obali
+    },
+    sky: ['#6a5a4a', '#b0967a'],
+    hills: [
+      { color: '#4a4038', y: 520, amp: 55, freq: 1.4 },
+      { color: '#332c26', y: 575, amp: 38, freq: 2.0 },
+    ],
+    ground: '#2c2620',
+    groundTop: '#4a3e30',
+  },
 ];

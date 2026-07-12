@@ -172,12 +172,20 @@ html, body {
 
 /* ---------- Izbor nivoa ---------- */
 
+/* Mnogo nivoa — dozvoli skrolovanje kad se kartice preliju van ekrana. */
+#level-select-screen {
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
 #levels-list {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
     justify-content: center;
-    max-width: 900px;
+    max-width: 1120px;
 }
 
 .level-card {

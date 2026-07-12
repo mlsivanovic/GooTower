@@ -69,6 +69,7 @@ export class GooBall {
 
   updateFalling(dt, world, level) {
     this.vy += PHYS.gravity * dt;
+    this.vx += (world.wind || 0) * dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 

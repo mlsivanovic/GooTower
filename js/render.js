@@ -65,6 +65,16 @@ export function drawPipe(ctx, level, active, time) {
     // prsten
     ctx.fillStyle = bodyDark;
     ctx.fillRect(x - W / 2 - 6, y - 26, W + 12, 16);
+  } else if (dir === 'up') {
+    const grad = ctx.createLinearGradient(x - W / 2, 0, x + W / 2, 0);
+    grad.addColorStop(0, bodyDark);
+    grad.addColorStop(0.5, body);
+    grad.addColorStop(1, bodyDark);
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - W / 2, y, W, WORLD.h - y + 10);
+    // prsten
+    ctx.fillStyle = bodyDark;
+    ctx.fillRect(x - W / 2 - 6, y + 10, W + 12, 16);
   } else { // 'left'
     const grad = ctx.createLinearGradient(0, y - W / 2, 0, y + W / 2);
     grad.addColorStop(0, bodyDark);
@@ -120,9 +130,53 @@ export function drawStruts(ctx, world) {
   }
   // čvorovi konstrukcije — male goo grudve na spojevima
   for (const p of world.points) {
+    if (p.pinned) drawAnchor(ctx, p.x, p.y);
     drawGooBody(ctx, p.x, p.y, GOO.radius * 0.92, 0);
   }
   ctx.restore();
+}
+
+// Fiksna tačka oslonca (zakovana) — metalni prsten oko čvora.
+function drawAnchor(ctx, x, y) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, GOO.radius * 1.35, 0, Math.PI * 2);
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#c9d2d8';
+  ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#6b747c';
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Šiljci / rotirajuće sečivo — dodir uništava kuglicu.
+export function drawHazards(ctx, hazards, time) {
+  for (const h of hazards) {
+    ctx.save();
+    ctx.translate(h.x, h.y);
+    ctx.rotate(time * 2.2 + h.x);
+    const spikes = 9, r = h.r;
+    ctx.beginPath();
+    for (let i = 0; i < spikes; i++) {
+      const a = (i / spikes) * Math.PI * 2;
+      const a2 = ((i + 0.5) / spikes) * Math.PI * 2;
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      ctx.lineTo(Math.cos(a2) * r * 0.52, Math.sin(a2) * r * 0.52);
+    }
+    ctx.closePath();
+    ctx.fillStyle = '#3a3f45';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#aab3ba';
+    ctx.stroke();
+    // opasna glavčina
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = '#c0392b';
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 export function drawPreview(ctx, x, y, candidates, valid) {

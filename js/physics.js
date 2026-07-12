@@ -9,6 +9,7 @@ export class Point {
     this.x = x; this.y = y;
     this.px = x; this.py = y;   // prethodna pozicija (Verlet)
     this.dragged = false;        // dok je držimo, ne integriše se
+    this.pinned = false;         // fiksna tačka (zakovana za tavanicu/obalu)
     this.onGround = false;
   }
   setVelocity(vx, vy, dt) {
@@ -30,6 +31,7 @@ export class World {
     this.points = [];
     this.struts = [];
     this.platforms = level.platforms; // [{x,y,w,h}]
+    this.wind = level.wind || 0;      // horizontalno ubrzanje (px/s^2), + = udesno
   }
 
   addPoint(x, y) {
@@ -67,15 +69,16 @@ export class World {
 
   integrate(h) {
     const g = PHYS.gravity * h * h;
+    const w = this.wind * h * h;
     for (const p of this.points) {
-      if (p.dragged) { p.px = p.x; p.py = p.y; continue; }
+      if (p.dragged || p.pinned) { p.px = p.x; p.py = p.y; continue; }
       let vx = (p.x - p.px) * PHYS.damping;
       let vy = (p.y - p.py) * PHYS.damping;
       // limit pomeraja — sprečava eksploziju solvera
       const v = Math.hypot(vx, vy);
       if (v > PHYS.maxSpeed) { vx = vx / v * PHYS.maxSpeed; vy = vy / v * PHYS.maxSpeed; }
       p.px = p.x; p.py = p.y;
-      p.x += vx;
+      p.x += vx + w;
       p.y += vy + g;
     }
   }
@@ -87,7 +90,7 @@ export class World {
       const dist = Math.hypot(dx, dy) || 0.0001;
       const diff = (dist - s.rest) / dist * k;
       const ax = dx * diff * 0.5, ay = dy * diff * 0.5;
-      const aFree = !s.a.dragged, bFree = !s.b.dragged;
+      const aFree = !s.a.dragged && !s.a.pinned, bFree = !s.b.dragged && !s.b.pinned;
       if (aFree && bFree) {
         s.a.x += ax; s.a.y += ay;
         s.b.x -= ax; s.b.y -= ay;
@@ -103,7 +106,7 @@ export class World {
     const r = GOO.radius;
     for (const p of this.points) {
       p.onGround = false;
-      if (p.dragged) continue;
+      if (p.dragged || p.pinned) continue;
       for (const pl of this.platforms) {
         collideCircleRect(p, r, pl);
       }
