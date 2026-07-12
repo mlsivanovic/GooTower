@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2c3e2d">
+    <title>Goo Tower</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" href="icon-192.png">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui-layer">
+            <!-- HUD tokom igre -->
+            <div id="hud">
+                <div id="goo-board">
+                    <span class="pipe-icon">◎</span>
+                    <span id="goo-count">0 / 0</span>
+                    <span id="goo-left" title="preostale slobodne kuglice">⚫ 0</span>
+                </div>
+                <div id="level-title"></div>
+                <div id="hint">Prevuci kuglicu blizu konstrukcije i pusti je da gradiš ka cevi!</div>
+            </div>
+
+            <!-- Gornje kontrole -->
+            <div id="top-controls">
+                <button id="mute-btn" class="icon-btn">🔊</button>
+                <button id="restart-btn" class="icon-btn" title="Restart">⟳</button>
+                <button id="home-btn" class="icon-btn" title="Meni">⌂</button>
+            </div>
+
+            <!-- Glavni meni -->
+            <div id="menu-screen" class="screen">
+                <h1 class="goo-title">GOO<span>TOWER</span></h1>
+                <p class="tagline">Lepljive kuglice. Klimave konstrukcije. Jedna gladna cev.</p>
+                <button id="play-btn" class="menu-btn">▶ Igraj</button>
+                <p class="credit">inspirisano igrom <em>World of Goo</em></p>
+            </div>
+
+            <!-- Izbor nivoa -->
+            <div id="level-select-screen" class="screen">
+                <h2 class="goo-title small">Nivoi</h2>
+                <div id="levels-list"></div>
+                <button id="ls-back-btn" class="menu-btn ghost">← Nazad</button>
+            </div>
+
+            <!-- Pobeda -->
+            <div id="win-screen" class="screen">
+                <h1 class="goo-title small" id="win-title">NIVO ZAVRŠEN!</h1>
+                <p id="win-stats" class="stats-line"></p>
+                <button id="win-next-btn" class="menu-btn">Sledeći ▶</button>
+                <button id="win-menu-btn" class="menu-btn ghost">≡ Nivoi</button>
+            </div>
+
+            <!-- Poraz -->
+            <div id="fail-screen" class="screen">
+                <h1 class="goo-title small danger">UPS!</h1>
+                <p id="fail-reason" class="stats-line"></p>
+                <button id="fail-retry-btn" class="menu-btn">⟳ Pokušaj ponovo</button>
+                <button id="fail-menu-btn" class="menu-btn ghost">≡ Nivoi</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/game.js"></script>
+    <script>
+        // na localhost-u preskačemo SW da keš ne bi smetao razvoju
+        if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log('SW registered'))
+                    .catch(err => console.log('SW error', err));
+            });
+        }
+    </script>
+</body>
+</html>

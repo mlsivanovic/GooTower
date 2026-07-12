@@ -1,0 +1,225 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0b0e12;
+    font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+#game-container { position: fixed; inset: 0; }
+
+#gameCanvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    cursor: grab;
+}
+#gameCanvas:active { cursor: grabbing; }
+
+#ui-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* ---------- HUD ---------- */
+
+#hud { display: none; }
+#hud.visible { display: block; }
+
+#goo-board {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(10, 14, 10, 0.55);
+    border: 2px solid rgba(182, 227, 107, 0.5);
+    border-radius: 24px;
+    padding: 8px 18px;
+    color: #eef7dc;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.pipe-icon { color: #b6e36b; font-size: 22px; }
+#goo-left { opacity: 0.75; font-size: 16px; font-weight: normal; }
+
+#level-title {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 30px;
+    font-weight: bold;
+    color: rgba(255,255,255,0.92);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+    opacity: 0;
+    transition: opacity 0.6s;
+}
+#level-title.flash { opacity: 1; }
+
+#hint {
+    position: absolute;
+    bottom: 26px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 90%;
+    text-align: center;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-radius: 18px;
+    padding: 8px 20px;
+    font-size: 16px;
+    animation: hint-fade 9s forwards;
+}
+@keyframes hint-fade {
+    0%, 70% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}
+
+/* ---------- Dugmad ---------- */
+
+#top-controls {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.icon-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.35);
+    background: rgba(15, 20, 15, 0.55);
+    color: #fff;
+    font-size: 21px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+}
+.icon-btn:hover { background: rgba(90, 130, 60, 0.6); transform: scale(1.08); }
+
+/* ---------- Ekrani ---------- */
+
+.screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background:
+        radial-gradient(ellipse at 50% 30%, rgba(120, 170, 80, 0.18), transparent 60%),
+        linear-gradient(180deg, rgba(16, 24, 14, 0.9), rgba(8, 12, 8, 0.95));
+    pointer-events: auto;
+    padding: 24px;
+    text-align: center;
+}
+.screen.visible { display: flex; }
+
+.goo-title {
+    font-size: clamp(46px, 9vw, 88px);
+    letter-spacing: 3px;
+    color: #2b2b30;
+    -webkit-text-stroke: 2px rgba(255,255,255,0.15);
+    text-shadow:
+        0 4px 0 rgba(0,0,0,0.45),
+        0 0 34px rgba(182, 227, 107, 0.35);
+    color: #dff0c0;
+}
+.goo-title span { color: #b6e36b; }
+.goo-title.small { font-size: clamp(30px, 6vw, 52px); }
+.goo-title.danger { color: #f0b9a8; text-shadow: 0 4px 0 rgba(0,0,0,0.45), 0 0 34px rgba(227, 122, 107, 0.4); }
+
+.tagline { color: rgba(255,255,255,0.75); font-size: 18px; margin-bottom: 8px; }
+.credit { color: rgba(255,255,255,0.4); font-size: 14px; margin-top: 18px; }
+.stats-line { color: rgba(255,255,255,0.85); font-size: 19px; max-width: 520px; }
+
+.menu-btn {
+    min-width: 240px;
+    padding: 14px 34px;
+    font-size: 21px;
+    font-weight: bold;
+    font-family: inherit;
+    color: #17240f;
+    background: linear-gradient(180deg, #cdf08a, #96c94f);
+    border: none;
+    border-radius: 32px;
+    box-shadow: 0 5px 0 #5e8531, 0 8px 18px rgba(0,0,0,0.4);
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+.menu-btn:hover { transform: translateY(-2px); }
+.menu-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #5e8531; }
+
+.menu-btn.ghost {
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    border: 2px solid rgba(255,255,255,0.35);
+    box-shadow: none;
+}
+.menu-btn.ghost:hover { border-color: #b6e36b; color: #dff0c0; }
+
+/* ---------- Izbor nivoa ---------- */
+
+#levels-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    max-width: 900px;
+}
+
+.level-card {
+    width: 240px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 16px;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(182, 227, 107, 0.4);
+    border-radius: 18px;
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.2s, background 0.2s;
+}
+.level-card:hover:not(.locked) {
+    transform: translateY(-4px) scale(1.03);
+    background: rgba(182, 227, 107, 0.12);
+    border-color: #b6e36b;
+}
+.level-card.locked { opacity: 0.45; cursor: default; }
+
+.lv-num {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: #b6e36b;
+    color: #17240f;
+    font-size: 20px;
+    font-weight: bold;
+}
+.level-card.locked .lv-num { background: transparent; font-size: 26px; }
+.lv-name { font-size: 20px; font-weight: bold; }
+.lv-sub { font-size: 13px; color: rgba(255,255,255,0.6); }
+.lv-best { font-size: 13px; color: #b6e36b; min-height: 16px; }
+
+@media (max-width: 640px) {
+    #goo-board { font-size: 16px; padding: 6px 14px; }
+    .icon-btn { width: 40px; height: 40px; font-size: 18px; }
+    .level-card { width: 100%; max-width: 320px; min-height: 0; }
+}
