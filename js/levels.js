@@ -181,15 +181,14 @@ export const LEVELS = [
   {
     id: 'veliki-ambis',
     name: 'Veliki ambis',
-    sub: 'Najširi ponor — skači sa stene na stenu do cevi.',
+    sub: 'Najširi ponor — preko jedne stene na sredini do cevi.',
     decor: { sun: null, particles: 'embers', props: [{ type: 'ruin', x: 120, y: 590, s: 55 }] },
     required: 12,
     total: 26,
     platforms: [
       { x: -200, y: 600, w: 540, h: 320 },   // leva ivica (do x=340)
       { x: 940, y: 600, w: 540, h: 320 },    // desna ivica (od x=940)
-      { x: 490, y: 560, w: 100, h: 400 },    // stena-oslonac 1
-      { x: 690, y: 560, w: 100, h: 400 },    // stena-oslonac 2
+      { x: 580, y: 560, w: 120, h: 400 },    // stena-oslonac na sredini (jedan raspon ~240px sa svake strane)
     ],
     killY: 900,
     pipe: { x: 995, y: 520, dir: 'left' },
