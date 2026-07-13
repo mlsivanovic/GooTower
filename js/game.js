@@ -1,6 +1,6 @@
 // Glavna petlja i logika igre: nivo, unos (drag & drop kuglica), cev, pobeda/poraz.
 
-import { WORLD, GOO, PIPE } from './config.js';
+import { WORLD, GOO, PIPE, BALLOON } from './config.js';
 import { World, dist } from './physics.js';
 import { GooBall, attachCandidates } from './goo.js';
 import { LEVELS } from './levels.js';
@@ -64,16 +64,30 @@ function startLevel(index) {
     game.balls.push(b);
   }
 
+  // baloni — leže na tlu i čekaju da ih igrač uhvati
+  for (const [x, y] of level.balloons || []) {
+    const b = new GooBall(x, y, 'balloon');
+    game.balls.push(b);
+  }
+
   ui.startHud(level);
   updateHud();
 }
 
 function updateHud() {
-  ui.updateHud(game.collected, game.level.required, freeBalls().length);
+  ui.updateHud(game.collected, game.level.required, freeBalls().length,
+    game.level.balloons ? balloonsLeft() : null);
 }
 
 function freeBalls() {
-  return game.balls.filter(b => ['crawl', 'walk', 'falling', 'held'].includes(b.state));
+  return game.balls.filter(b => b.type !== 'balloon'
+    && ['crawl', 'walk', 'falling', 'held'].includes(b.state));
+}
+
+// preostali baloni: slobodni/držani + zakačeni na konstrukciju
+function balloonsLeft() {
+  return game.balls.filter(b => b.type === 'balloon'
+    && ['walk', 'falling', 'held', 'balloonNode'].includes(b.state)).length;
 }
 
 // ---------- Unos ----------
@@ -96,16 +110,32 @@ canvas.addEventListener('pointerdown', e => {
 
   let best = null, bestD = GOO.grabRadius;
   for (const b of game.balls) {
+    if (b.state === 'balloonNode') {
+      // zakačen balon može ponovo da se uhvati (skida se sa konstrukcije)
+      const d = dist(p.x, p.y, b.node.x, b.node.y);
+      if (d < bestD) { bestD = d; best = b; }
+      continue;
+    }
     if (!['crawl', 'walk', 'falling'].includes(b.state)) continue;
     const d = dist(p.x, p.y, b.x, b.y);
     if (d < bestD) { bestD = d; best = b; }
   }
   if (best) {
+    if (best.state === 'balloonNode') detachBalloon(best);
     best.grab();
     game.held = best;
     sfx.grab();
   }
 });
+
+// Skida balon sa konstrukcije: uklanja njegov čvor i kanap-gredu.
+function detachBalloon(b) {
+  const node = b.node;
+  b.x = node.x; b.y = node.y;
+  game.world.struts = game.world.struts.filter(s => s.a !== node && s.b !== node);
+  game.world.points = game.world.points.filter(x => x !== node);
+  b.node = null;
+}
 
 canvas.addEventListener('pointermove', e => {
   const p = toWorld(e);
@@ -122,6 +152,27 @@ function releaseHeld() {
   // kuglica je "na kursoru" — puštanje važi tamo gde je pokazivač
   b.x = game.pointer.x;
   b.y = game.pointer.y;
+
+  if (b.type === 'balloon') {
+    // balon se kači tačno jednim kanapom na najbliži čvor
+    const cands = attachCandidates(game.world, b.x, b.y, BALLOON.attachReach);
+    if (cands.length >= 1) {
+      const node = game.world.addPoint(b.x, b.y);
+      node.buoyant = true;
+      const s = game.world.addStrut(node, cands[0].p, BALLOON.stringLen);
+      if (s) s.noCrawl = true;
+      b.state = 'balloonNode';
+      b.node = node;
+      sfx.attach();
+      spawnParticles(b.x, b.y, '#e2556a', 6);
+    } else {
+      b.release(game.pointer.vx * 0.6, game.pointer.vy * 0.6);
+      sfx.drop();
+    }
+    updateHud();
+    return;
+  }
+
   const cands = attachCandidates(game.world, b.x, b.y);
   if (cands.length >= GOO.minAttach) {
     // kuglica postaje čvor konstrukcije
@@ -179,12 +230,13 @@ function checkHazards() {
   if (!hz || !hz.length) return;
   const touch = GOO.radius * 0.55;
 
-  // slobodne (i držane) kuglice — dodir = kraj
+  // slobodne (i držane) kuglice — dodir = kraj; balon puca
   for (const b of game.balls) {
     if (!['crawl', 'walk', 'falling', 'held'].includes(b.state)) continue;
     for (const h of hz) {
       if (dist(b.x, b.y, h.x, h.y) < h.r + touch) {
         b.state = 'lost';
+        if (b.type === 'balloon') sfx.pop();
         if (b === game.held) game.held = null;
         break;
       }
@@ -203,6 +255,7 @@ function checkHazards() {
 }
 
 function destroyNode(p) {
+  if (p.buoyant) { popBalloonNode(p); return; }
   spawnParticles(p.x, p.y, '#3a3a42', 10);
   const removed = game.world.strutsAt(p);
   for (const b of game.balls) {
@@ -211,6 +264,16 @@ function destroyNode(p) {
   game.world.struts = game.world.struts.filter(s => s.a !== p && s.b !== p);
   game.world.points = game.world.points.filter(x => x !== p);
   sfx.lost();
+}
+
+// Balon zakačen na konstrukciju puca na sečivu — nestaje trajno.
+function popBalloonNode(p) {
+  spawnParticles(p.x, p.y, '#e2556a', 12);
+  game.world.struts = game.world.struts.filter(s => s.a !== p && s.b !== p);
+  game.world.points = game.world.points.filter(x => x !== p);
+  game.balls = game.balls.filter(b => !(b.state === 'balloonNode' && b.node === p));
+  sfx.pop();
+  updateHud();
 }
 
 // ---------- Cev i kraj nivoa ----------
@@ -227,9 +290,10 @@ function updatePipe(dt) {
   game.suckTimer += dt;
   if (game.suckTimer >= PIPE.suckInterval) {
     game.suckTimer = 0;
-    // usisaj najbližu slobodnu kuglicu (držanu ne diramo)
+    // usisaj najbližu slobodnu kuglicu (držanu ne diramo; balone cev ne usisava)
     let best = null, bestD = Infinity;
     for (const b of game.balls) {
+      if (b.type === 'balloon') continue;
       if (!['crawl', 'walk', 'falling'].includes(b.state)) continue;
       const d = dist(b.x, b.y, pipe.x, pipe.y);
       if (d < bestD) { bestD = d; best = b; }
@@ -325,7 +389,10 @@ function tick(dt) {
   if (game.state === 'playing') checkHazards();
   const lost = game.balls.filter(b => b.state === 'lost');
   if (lost.length) {
-    for (const b of lost) spawnParticles(b.x, Math.min(b.y, level.killY), '#222', 6);
+    for (const b of lost) {
+      spawnParticles(b.x, Math.min(b.y, level.killY),
+        b.type === 'balloon' ? '#e2556a' : '#222', 6);
+    }
     sfx.lost();
     game.balls = game.balls.filter(b => b.state !== 'lost');
     updateHud();
@@ -369,18 +436,27 @@ function draw() {
   ctx.clip();
 
   R.drawBackground(ctx, game.level, game.time);
+  R.drawAtmosphere(ctx, game.level, game.time); // vetar-pramenovi + ambijentalne čestice
   R.drawPipe(ctx, game.level, game.pipeActive, game.time);
   R.drawStruts(ctx, game.world);
 
   // preview kačenja za držanu kuglicu
   if (game.held) {
-    const cands = attachCandidates(game.world, game.held.x, game.held.y);
-    const valid = cands.length >= GOO.minAttach;
-    if (cands.length) R.drawPreview(ctx, game.held.x, game.held.y, cands, valid);
+    if (game.held.type === 'balloon') {
+      const cands = attachCandidates(game.world, game.held.x, game.held.y, BALLOON.attachReach).slice(0, 1);
+      if (cands.length) R.drawPreview(ctx, game.held.x, game.held.y, cands, true, true);
+    } else {
+      const cands = attachCandidates(game.world, game.held.x, game.held.y);
+      const valid = cands.length >= GOO.minAttach;
+      if (cands.length) R.drawPreview(ctx, game.held.x, game.held.y, cands, valid);
+    }
   }
 
   const look = { x: game.pointer.x, y: game.pointer.y };
-  for (const b of game.balls) R.drawBall(ctx, b, look, game.time);
+  for (const b of game.balls) {
+    if (b.type === 'balloon') R.drawBalloon(ctx, b, look, game.time);
+    else R.drawBall(ctx, b, look, game.time);
+  }
   if (game.level.hazards) R.drawHazards(ctx, game.level.hazards, game.time);
   R.drawParticles(ctx, game.particles);
 
@@ -400,3 +476,6 @@ ui.onQuit = () => {
 ui.init();
 ui.show('menu');
 requestAnimationFrame(frame);
+
+// izloženo za debug u konzoli
+window.game = game;

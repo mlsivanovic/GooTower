@@ -26,6 +26,16 @@ export const GOO = {
   reattachDist: 70,       // koliko blizu grede mora pasti da se vrati na konstrukciju
 };
 
+// Baloni — kače se jednom "kanap" gredom i vuku konstrukciju nagore.
+// Ništa ne može da se zakači na balon; cev ih ne usisava; šiljci ih buše.
+export const BALLOON = {
+  radius: 16,
+  lift: 4200,           // px/s^2 uzgon (≈2.6x gravitacija → 1 balon nosi ~2 čvora)
+  stringLen: 90,        // dužina kanapa (rest dužina grede ka konstrukciji)
+  windFactor: 1.5,      // vetar deluje jače na balone (veliki su i lagani)
+  attachReach: 150,     // dokle balon "vidi" čvor za kačenje
+};
+
 // Cev (cilj nivoa)
 export const PIPE = {
   activateRadius: 100,    // čvor konstrukcije u ovom radijusu aktivira cev
@@ -40,6 +50,9 @@ export const COLORS = {
   strutHighlight: 'rgba(255,255,255,0.12)',
   preview: 'rgba(255, 255, 255, 0.65)',
   previewBad: 'rgba(255, 90, 90, 0.5)',
+  balloon: '#e2556a',
+  balloonDark: '#a93247',
+  previewBalloon: 'rgba(255, 150, 170, 0.75)',
 };
 
 export const STORAGE_KEY = 'goo-tower-save-v1';

@@ -7,11 +7,13 @@ import { collideCircleRect, pointOnStrut, dist } from './physics.js';
 let nextId = 1;
 
 export class GooBall {
-  constructor(x, y) {
+  constructor(x, y, type = 'goo') {
     this.id = nextId++;
+    this.type = type;       // 'goo' | 'balloon'
     this.x = x; this.y = y;
     this.vx = 0; this.vy = 0;
-    this.state = 'falling'; // falling | crawl | walk | held | sucked | node | lost
+    this.state = 'falling'; // falling | crawl | walk | held | sucked | node | balloonNode | lost
+    this.node = null;       // za balloonNode: Point na koji je balon vezan
     this.strut = null;      // greda po kojoj šeta
     this.t = 0;             // pozicija na gredi 0..1
     this.dir = 1;
@@ -38,7 +40,13 @@ export class GooBall {
       case 'walk': this.updateWalk(dt, world, level); break;
     }
 
-    if (this.state !== 'node' && this.y > level.killY) {
+    // zakačen balon prati svoj čvor (fizika ga pomera)
+    if (this.state === 'balloonNode' && this.node) {
+      this.x = this.node.x;
+      this.y = this.node.y;
+    }
+
+    if (this.state !== 'node' && this.state !== 'balloonNode' && this.y > level.killY) {
       this.state = 'lost';
     }
   }
@@ -51,7 +59,7 @@ export class GooBall {
 
     if (this.t > 1 || this.t < 0) {
       const node = this.t > 1 ? s.b : s.a;
-      const options = world.strutsAt(node).filter(x => x !== s);
+      const options = world.strutsAt(node).filter(x => x !== s && !x.noCrawl);
       if (options.length && Math.random() < 0.85) {
         const next = options[(Math.random() * options.length) | 0];
         this.strut = next;
@@ -85,25 +93,28 @@ export class GooBall {
       if (Math.abs(this.vy) < 20) {
         this.vy = 0;
         this.squish = 0.4;
-        // sleteo — pokušaj povratak na konstrukciju
-        if (!this.tryReattach(world)) this.state = 'walk';
+        // sleteo — pokušaj povratak na konstrukciju (balon samo leži i čeka)
+        if (this.type === 'balloon' || !this.tryReattach(world)) this.state = 'walk';
       }
     }
-    // u letu može da se uhvati za gredu pored koje prolazi
-    if (!hit && this.vy > 0 && this.tryReattach(world)) return;
+    // u letu može da se uhvati za gredu pored koje prolazi (balon ne)
+    if (!hit && this.vy > 0 && this.type !== 'balloon' && this.tryReattach(world)) return;
   }
 
   updateWalk(dt, world, level) {
-    // hoda po tlu ka najbližem čvoru konstrukcije
-    if (this.tryReattach(world)) return;
-    const target = nearestNode(world, this.x, this.y);
-    if (!target) return;
-    const d = target.x - this.x;
-    if (Math.abs(d) > 4) {
-      this.x += Math.sign(d) * GOO.walkSpeed * dt;
-      this.y -= 0; // ostaje na tlu
+    // balon ne hoda — leži na tlu dok ga igrač ne uhvati
+    if (this.type !== 'balloon') {
+      // hoda po tlu ka najbližem čvoru konstrukcije
+      if (this.tryReattach(world)) return;
+      const target = nearestNode(world, this.x, this.y);
+      if (target) {
+        const d = target.x - this.x;
+        if (Math.abs(d) > 4) {
+          this.x += Math.sign(d) * GOO.walkSpeed * dt;
+        }
+      }
+      this.bobWalk = true;
     }
-    this.bobWalk = true;
     // gravitacija/podloga: drži ga na platformi ispod
     this.vy += PHYS.gravity * dt;
     this.y += this.vy * dt;
@@ -117,6 +128,7 @@ export class GooBall {
   tryReattach(world) {
     let best = null, bestD = GOO.reattachDist;
     for (const s of world.struts) {
+      if (s.noCrawl) continue;
       const t = projectOnStrut(s, this.x, this.y);
       const p = pointOnStrut(s, t);
       const d = dist(this.x, this.y, p.x, p.y);
@@ -169,11 +181,13 @@ function nearestNode(world, x, y) {
 }
 
 // Kandidati za kačenje: zakačeni čvorovi u dometu držane kuglice.
-export function attachCandidates(world, x, y) {
+// Na balon-čvorove ne može ništa da se zakači.
+export function attachCandidates(world, x, y, reach = GOO.attachReach) {
   const list = [];
   for (const p of world.points) {
+    if (p.buoyant) continue;
     const d = dist(x, y, p.x, p.y);
-    if (d >= GOO.minStrut && d <= GOO.attachReach) list.push({ p, d });
+    if (d >= GOO.minStrut && d <= reach) list.push({ p, d });
   }
   list.sort((a, b) => a.d - b.d);
   return list.slice(0, GOO.maxLinks);

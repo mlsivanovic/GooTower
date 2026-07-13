@@ -2,7 +2,7 @@
 // Elastičnost dolazi iz namerno "mekog" solvera (stiffness < 1) — konstrukcija
 // se njiše i uvija kao u World of Goo.
 
-import { PHYS, GOO } from './config.js';
+import { PHYS, GOO, BALLOON } from './config.js';
 
 export class Point {
   constructor(x, y) {
@@ -10,6 +10,7 @@ export class Point {
     this.px = x; this.py = y;   // prethodna pozicija (Verlet)
     this.dragged = false;        // dok je držimo, ne integriše se
     this.pinned = false;         // fiksna tačka (zakovana za tavanicu/obalu)
+    this.buoyant = false;        // balon-čvor: uzgon umesto gravitacije
     this.onGround = false;
   }
   setVelocity(vx, vy, dt) {
@@ -69,6 +70,7 @@ export class World {
 
   integrate(h) {
     const g = PHYS.gravity * h * h;
+    const lift = -BALLOON.lift * h * h;
     const w = this.wind * h * h;
     for (const p of this.points) {
       if (p.dragged || p.pinned) { p.px = p.x; p.py = p.y; continue; }
@@ -78,8 +80,8 @@ export class World {
       const v = Math.hypot(vx, vy);
       if (v > PHYS.maxSpeed) { vx = vx / v * PHYS.maxSpeed; vy = vy / v * PHYS.maxSpeed; }
       p.px = p.x; p.py = p.y;
-      p.x += vx + w;
-      p.y += vy + g;
+      p.x += vx + w * (p.buoyant ? BALLOON.windFactor : 1);
+      p.y += vy + (p.buoyant ? lift : g);
     }
   }
 

@@ -56,6 +56,7 @@ export const sfx = {
   suck()    { tone({ freq: 350, to: 1100, dur: 0.32, type: 'sine', vol: 0.2 }); },
   pipeOn()  { tone({ freq: 160, to: 320, dur: 0.4, type: 'square', vol: 0.08 }); tone({ freq: 640, dur: 0.3, vol: 0.1, delay: 0.1 }); },
   lost()    { tone({ freq: 400, to: 120, dur: 0.35, type: 'sawtooth', vol: 0.1 }); },
+  pop()     { noise({ dur: 0.07, freq: 2400, vol: 0.22 }); tone({ freq: 880, to: 220, dur: 0.11, type: 'triangle', vol: 0.14 }); },
   win() {
     [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.22, type: 'triangle', vol: 0.2, delay: i * 0.12 }));
   },

@@ -10,10 +10,15 @@ Fizička puzla inspirisana igrom **World of Goo**, napisana u čistom (vanilla) 
 
 ## ✨ Mogućnosti
 
-- 🧩 **3 nivoa** rastuće težine — *Prvi toranj → Provalija → Do neba*
+- 🧩 **23 nivoa u 3 poglavlja** (*Zelena brda → Mašine i vetrovi → Put u nebo*) — rastuća težina, inspirisani raznolikim nivoima iz World of Goo 1 i 2
 - 🕸️ **Verlet fizika** — grede su namerno „meke" (elastičan solver) pa se konstrukcija ljulja i uvija kao u originalu
 - 🫧 **Živa goo kuglica** — kuglice šetaju po gredama, trepću, prate kursor pogledom i cvile kad ih uhvatiš
+- 🎈 **Baloni** — kače se kanapom i dižu konstrukciju; cev ih ne usisava, a šiljci ih buše (kao u originalu)
+- 🌬️ **Vetar** — nosi konstrukciju, balone i kuglice u letu; vidljiv kroz lelujave pramenove i čestice
+- ⚙️ **Sečiva i šiljci** — dodir uništava kuglicu, a pogođeni čvor otkida deo konstrukcije
+- ⚓ **Fiksni oslonci** — zakovane tačke za viseće konstrukcije i mostove
 - 🎯 **Cilj = cev** — kad konstrukcija stigne do cevi, ona se aktivira i usisava preostale slobodne kuglice; dovoljno njih = pobeda
+- 🌄 **Živa pozadina** — oblaci, zvezde, lišće/pahulje/žar, siluete zupčanika i dimnjaka, po temi nivoa
 - 🔊 **Proceduralni zvuk** (Web Audio) — nema audio fajlova, sve se sintetiše
 - 💾 **Progres** — otključavanje nivoa redom i najbolji rezultat, čuvani u `localStorage`
 - 📱 **Touch + miš** — jedan te isti drag & drop model radi na oba
@@ -25,6 +30,8 @@ Fizička puzla inspirisana igrom **World of Goo**, napisana u čistom (vanilla) 
 | Uhvati kuglicu | pritisni i drži na kuglici |
 | Zakači na konstrukciju | prevuci blizu postojećih čvorova i pusti |
 | Baci u stranu | pusti dalje od konstrukcije |
+| Zakači balon | prevuci balon blizu čvora i pusti (jedan kanap) |
+| Skini balon | uhvati zakačen balon i odnesi ga |
 
 Isprekidane linije u prevlačenju pokazuju gde će nova greda da nikne. Bela = ok, crvena = premalo oslonaca.
 

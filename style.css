@@ -188,6 +188,24 @@ html, body {
     max-width: 1120px;
 }
 
+/* Naslov poglavlja — puna širina, prelama flex red. */
+.chapter-head {
+    flex-basis: 100%;
+    text-align: center;
+    margin-top: 14px;
+}
+.chapter-head h3 {
+    color: #cde89a;
+    font-size: 24px;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.4);
+}
+.chapter-head p {
+    color: rgba(255,255,255,0.45);
+    font-size: 14px;
+    margin-top: 2px;
+}
+
 .level-card {
     width: 240px;
     min-height: 150px;
