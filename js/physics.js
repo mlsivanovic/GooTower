@@ -2,7 +2,7 @@
 // Elastičnost dolazi iz namerno "mekog" solvera (stiffness < 1) — konstrukcija
 // se njiše i uvija kao u World of Goo.
 
-import { PHYS, GOO, BALLOON } from './config.js';
+import { PHYS, GOO, BALLOON, LIQUID, MECHANISM } from './config.js';
 
 export class Point {
   constructor(x, y) {
@@ -31,8 +31,121 @@ export class World {
   constructor(level) {
     this.points = [];
     this.struts = [];
-    this.platforms = level.platforms; // [{x,y,w,h}]
+    this.platforms = level.platforms.map(pl => ({ ...pl }));
     this.wind = level.wind || 0;      // horizontalno ubrzanje (px/s^2), + = udesno
+    this.liquids = (level.liquids || []).map(liquid => ({ ...liquid }));
+    this.fans = (level.fans || []).map(fan => ({ ...fan }));
+    this.switches = (level.switches || []).map(sw => ({
+      ...sw, pressed: false, latched: false, active: false,
+    }));
+    this.gates = (level.gates || []).map(gate => {
+      const platform = { x: gate.x, y: gate.y, w: gate.w, h: gate.h, mechanism: 'gate' };
+      this.platforms.push(platform);
+      return {
+        ...gate,
+        toX: gate.toX ?? gate.x,
+        toY: gate.toY ?? gate.y - gate.h - 24,
+        progress: 0,
+        platform,
+      };
+    });
+    this.movers = (level.movers || []).map(mover => {
+      const platform = { x: mover.x, y: mover.y, w: mover.w, h: mover.h, mechanism: 'mover' };
+      this.platforms.push(platform);
+      return {
+        ...mover,
+        toX: mover.toX ?? mover.x,
+        toY: mover.toY ?? mover.y,
+        progress: 0,
+        platform,
+      };
+    });
+    this.time = 0;
+  }
+
+  updateEnvironment(dt, balls = []) {
+    this.time += dt;
+    const liveBalls = balls.filter(b =>
+      !['lost', 'sucked', 'collected', 'balloonNode', 'held'].includes(b.state));
+    const bodies = [...this.points, ...liveBalls];
+
+    for (const sw of this.switches) {
+      sw.pressed = bodies.some(body =>
+        body.x >= sw.x && body.x <= sw.x + sw.w
+        && body.y >= sw.y - MECHANISM.switchDepth && body.y <= sw.y + 12);
+      if (sw.latch && sw.pressed) sw.latched = true;
+      sw.active = sw.latch ? sw.latched : sw.pressed;
+    }
+
+    for (const gate of this.gates) {
+      const target = this.switchActive(gate.switch) ? 1 : 0;
+      gate.progress = approach(gate.progress, target,
+        (gate.speed || MECHANISM.gateSpeed) * dt);
+      gate.platform.x = mix(gate.x, gate.toX, gate.progress);
+      gate.platform.y = mix(gate.y, gate.toY, gate.progress);
+    }
+
+    const carried = [
+      ...this.points,
+      ...liveBalls.filter(b => b.state === 'walk' || b.state === 'falling'),
+    ];
+    for (const mover of this.movers) {
+      if (mover.switch) {
+        const target = this.switchActive(mover.switch) ? 1 : 0;
+        mover.progress = approach(mover.progress, target,
+          (mover.speed || 0.45) * dt);
+      } else {
+        const period = mover.period || 4;
+        const phase = (mover.phase || 0) * Math.PI * 2;
+        mover.progress = 0.5 - Math.cos(this.time * Math.PI * 2 / period + phase) * 0.5;
+      }
+      this.movePlatform(mover.platform,
+        mix(mover.x, mover.toX, mover.progress),
+        mix(mover.y, mover.toY, mover.progress), carried);
+    }
+  }
+
+  switchActive(id) {
+    return this.switches.some(sw => sw.id === id && sw.active);
+  }
+
+  movePlatform(platform, x, y, bodies) {
+    const dx = x - platform.x, dy = y - platform.y;
+    if (dx || dy) {
+      for (const body of bodies) {
+        const onTop = body.x >= platform.x - GOO.radius
+          && body.x <= platform.x + platform.w + GOO.radius
+          && Math.abs(body.y - (platform.y - GOO.radius)) < 24;
+        if (!onTop) continue;
+        body.x += dx; body.y += dy;
+        if ('px' in body) { body.px += dx; body.py += dy; }
+      }
+    }
+    platform.x = x;
+    platform.y = y;
+  }
+
+  liquidAt(x, y) {
+    return this.liquids.find(liquid => x >= liquid.x && x <= liquid.x + liquid.w
+      && y >= liquid.y && y <= liquid.y + liquid.h) || null;
+  }
+
+  forceAt(x, y, buoyant = false) {
+    let ax = this.wind;
+    let ay = buoyant ? -BALLOON.lift : PHYS.gravity;
+    for (const fan of this.fans) {
+      if (x < fan.x || x > fan.x + fan.w || y < fan.y || y > fan.y + fan.h) continue;
+      ax += fan.fx || 0;
+      ay += fan.fy || 0;
+    }
+    const liquid = this.liquidAt(x, y);
+    let drag = PHYS.damping;
+    if (liquid?.type === 'water') {
+      ay -= LIQUID.waterLift;
+      drag *= LIQUID.waterDrag;
+    }
+    if (buoyant) ax *= BALLOON.windFactor;
+    return { ax, ay, drag, liquid };
   }
 
   addPoint(x, y) {
@@ -69,19 +182,17 @@ export class World {
   }
 
   integrate(h) {
-    const g = PHYS.gravity * h * h;
-    const lift = -BALLOON.lift * h * h;
-    const w = this.wind * h * h;
     for (const p of this.points) {
       if (p.dragged || p.pinned) { p.px = p.x; p.py = p.y; continue; }
-      let vx = (p.x - p.px) * PHYS.damping;
-      let vy = (p.y - p.py) * PHYS.damping;
+      const force = this.forceAt(p.x, p.y, p.buoyant);
+      let vx = (p.x - p.px) * force.drag;
+      let vy = (p.y - p.py) * force.drag;
       // limit pomeraja — sprečava eksploziju solvera
       const v = Math.hypot(vx, vy);
       if (v > PHYS.maxSpeed) { vx = vx / v * PHYS.maxSpeed; vy = vy / v * PHYS.maxSpeed; }
       p.px = p.x; p.py = p.y;
-      p.x += vx + w * (p.buoyant ? BALLOON.windFactor : 1);
-      p.y += vy + (p.buoyant ? lift : g);
+      p.x += vx + force.ax * h * h;
+      p.y += vy + force.ay * h * h;
     }
   }
 
@@ -114,6 +225,15 @@ export class World {
       }
     }
   }
+}
+
+function mix(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function approach(value, target, amount) {
+  if (value < target) return Math.min(target, value + amount);
+  return Math.max(target, value - amount);
 }
 
 // Izbaci tačku iz pravougaonika po najkraćoj osi + trenje na kontaktu.

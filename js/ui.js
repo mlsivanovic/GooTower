@@ -67,6 +67,12 @@ export const ui = {
     $('level-title').textContent = level.name;
     $('level-title').classList.add('flash');
     setTimeout(() => $('level-title').classList.remove('flash'), 2600);
+    const hint = $('hint');
+    hint.textContent = level.hint
+      || 'Prevuci kuglicu blizu konstrukcije i pusti je da gradiš ka cevi!';
+    hint.classList.remove('show');
+    void hint.offsetWidth;
+    hint.classList.add('show');
     this.updateHud(0, level.required, level.total,
       level.balloons ? level.balloons.length : null);
   },

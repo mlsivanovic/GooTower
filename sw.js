@@ -1,4 +1,4 @@
-const CACHE_NAME = 'goo-tower-v6';
+const CACHE_NAME = 'goo-tower-v8';
 
 // Obavezni resursi — keširaju se atomično pri instalaciji.
 const CORE = [
@@ -27,8 +27,16 @@ self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      await cache.addAll(CORE);
-      await Promise.allSettled(OPTIONAL.map(url => cache.add(url)));
+      // Zaobiđi HTTP keš da nova verzija ne pomeša stare i nove ES module.
+      await Promise.all(CORE.map(async url => {
+        const response = await fetch(new Request(url, { cache: 'reload' }));
+        if (!response.ok) throw new Error(`Neuspešno keširanje: ${url}`);
+        await cache.put(url, response);
+      }));
+      await Promise.allSettled(OPTIONAL.map(async url => {
+        const response = await fetch(new Request(url, { cache: 'reload' }));
+        if (response.ok) await cache.put(url, response);
+      }));
     })
   );
 });

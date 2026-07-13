@@ -10,15 +10,17 @@ Fizička puzla inspirisana igrom **World of Goo**, napisana u čistom (vanilla) 
 
 ## ✨ Mogućnosti
 
-- 🧩 **23 nivoa u 3 poglavlja** (*Zelena brda → Mašine i vetrovi → Put u nebo*) — rastuća težina, inspirisani raznolikim nivoima iz World of Goo 1 i 2
+- 🧩 **33 nivoa u 4 poglavlja** (*Zelena brda → Mašine i vetrovi → Put u nebo → Dubine i mehanizmi*) — rastuća težina i originalne fizičke puzle inspirisane najboljim idejama žanra
 - 🕸️ **Verlet fizika** — grede su namerno „meke" (elastičan solver) pa se konstrukcija ljulja i uvija kao u originalu
 - 🫧 **Živa goo kuglica** — kuglice šetaju po gredama, trepću, prate kursor pogledom i cvile kad ih uhvatiš
 - 🎈 **Baloni** — kače se kanapom i dižu konstrukciju; cev ih ne usisava, a šiljci ih buše (kao u originalu)
 - 🌬️ **Vetar** — nosi konstrukciju, balone i kuglice u letu; vidljiv kroz lelujave pramenove i čestice
+- 💧 **Voda i lava** — voda usporava pad i daje uzgon, dok lava trenutno uništava kuglice i čvorove
+- 🔧 **Puzzle mehanizmi** — lokalni ventilatori, pritisne ploče, kapije, liftovi i pokretne platforme menjaju način na koji se svaki problem rešava
 - ⚙️ **Sečiva i šiljci** — dodir uništava kuglicu, a pogođeni čvor otkida deo konstrukcije
 - ⚓ **Fiksni oslonci** — zakovane tačke za viseće konstrukcije i mostove
 - 🎯 **Cilj = cev** — kad konstrukcija stigne do cevi, ona se aktivira i usisava preostale slobodne kuglice; dovoljno njih = pobeda
-- 🌄 **Živa pozadina** — oblaci, zvezde, lišće/pahulje/žar, siluete zupčanika i dimnjaka, po temi nivoa
+- 🌄 **Živa pozadina** — oblaci, zvezde, kiša, mehurići, žar i nove siluete cevi, tornjeva, korenja i reaktora, po temi nivoa
 - 🔊 **Proceduralni zvuk** (Web Audio) — nema audio fajlova, sve se sintetiše
 - 💾 **Progres** — otključavanje nivoa redom i najbolji rezultat, čuvani u `localStorage`
 - 📱 **Touch + miš** — jedan te isti drag & drop model radi na oba

@@ -1,7 +1,7 @@
 // Goo kuglice — slobodne kuglice koje šetaju po konstrukciji, padaju,
 // hodaju po tlu i mogu da se prevuku i zakače kao novi čvorovi.
 
-import { GOO, PHYS } from './config.js';
+import { GOO, PHYS, LIQUID } from './config.js';
 import { collideCircleRect, pointOnStrut, dist } from './physics.js';
 
 let nextId = 1;
@@ -76,14 +76,20 @@ export class GooBall {
   }
 
   updateFalling(dt, world, level) {
-    this.vy += PHYS.gravity * dt;
-    this.vx += (world.wind || 0) * dt;
+    const force = world.forceAt(this.x, this.y);
+    this.vy += force.ay * dt;
+    this.vx += force.ax * dt;
+    if (force.liquid?.type === 'water') {
+      const drag = Math.pow(LIQUID.waterDrag, dt * 60);
+      this.vx *= drag;
+      this.vy *= drag;
+    }
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
     const proxy = { x: this.x, y: this.y, px: this.x - this.vx * dt, py: this.y - this.vy * dt };
     let hit = false;
-    for (const pl of level.platforms) {
+    for (const pl of world.platforms) {
       if (collideCircleRect(proxy, GOO.radius, pl)) hit = true;
     }
     if (hit) {
@@ -102,6 +108,10 @@ export class GooBall {
   }
 
   updateWalk(dt, world, level) {
+    if (world.liquidAt(this.x, this.y)?.type === 'water') {
+      this.state = 'falling';
+      return;
+    }
     // balon ne hoda — leži na tlu dok ga igrač ne uhvati
     if (this.type !== 'balloon') {
       // hoda po tlu ka najbližem čvoru konstrukcije
@@ -119,7 +129,7 @@ export class GooBall {
     this.vy += PHYS.gravity * dt;
     this.y += this.vy * dt;
     const proxy = { x: this.x, y: this.y, px: this.x, py: this.y - this.vy * dt };
-    for (const pl of level.platforms) {
+    for (const pl of world.platforms) {
       if (collideCircleRect(proxy, GOO.radius, pl)) { this.vy = 0; }
     }
     this.x = proxy.x; this.y = proxy.y;

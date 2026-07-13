@@ -226,20 +226,18 @@ function updateParticles(dt) {
 // ---------- Šiljci / sečiva ----------
 
 function checkHazards() {
-  const hz = game.level.hazards;
-  if (!hz || !hz.length) return;
+  const hz = game.level.hazards || [];
+  const lava = game.world.liquids.filter(liquid => liquid.type === 'lava');
+  if (!hz.length && !lava.length) return;
   const touch = GOO.radius * 0.55;
 
   // slobodne (i držane) kuglice — dodir = kraj; balon puca
   for (const b of game.balls) {
     if (!['crawl', 'walk', 'falling', 'held'].includes(b.state)) continue;
-    for (const h of hz) {
-      if (dist(b.x, b.y, h.x, h.y) < h.r + touch) {
-        b.state = 'lost';
-        if (b.type === 'balloon') sfx.pop();
-        if (b === game.held) game.held = null;
-        break;
-      }
+    if (touchesDanger(b.x, b.y, touch, hz, lava)) {
+      b.state = 'lost';
+      if (b.type === 'balloon') sfx.pop();
+      if (b === game.held) game.held = null;
     }
   }
 
@@ -247,11 +245,18 @@ function checkHazards() {
   const dead = [];
   for (const p of game.world.points) {
     if (p.pinned) continue;
-    for (const h of hz) {
-      if (dist(p.x, p.y, h.x, h.y) < h.r + touch) { dead.push(p); break; }
-    }
+    if (touchesDanger(p.x, p.y, touch, hz, lava)) dead.push(p);
   }
   for (const p of dead) destroyNode(p);
+}
+
+function touchesDanger(x, y, radius, hazards, lava) {
+  if (hazards.some(h => dist(x, y, h.x, h.y) < h.r + radius)) return true;
+  return lava.some(liquid => {
+    const cx = Math.max(liquid.x, Math.min(x, liquid.x + liquid.w));
+    const cy = Math.max(liquid.y, Math.min(y, liquid.y + liquid.h));
+    return dist(x, y, cx, cy) < radius;
+  });
 }
 
 function destroyNode(p) {
@@ -384,6 +389,7 @@ function tick(dt) {
     b.y += (game.pointer.y - b.y) * k;
   }
 
+  world.updateEnvironment(dt, game.balls);
   world.step(dt);
   for (const b of game.balls) b.update(dt, world, level);
   if (game.state === 'playing') checkHazards();
@@ -437,6 +443,8 @@ function draw() {
 
   R.drawBackground(ctx, game.level, game.time);
   R.drawAtmosphere(ctx, game.level, game.time); // vetar-pramenovi + ambijentalne čestice
+  R.drawMechanisms(ctx, game.world, game.time);
+  R.drawLiquids(ctx, game.level, game.time);
   R.drawPipe(ctx, game.level, game.pipeActive, game.time);
   R.drawStruts(ctx, game.world);
 

@@ -135,6 +135,56 @@ function drawProp(ctx, pr, time) {
       const h = pr.s * (1.1 - i * 0.3);
       ctx.fillRect(pr.x + i * pr.s * 0.45 - w / 2, pr.y - h, w, h);
     }
+  } else if (pr.type === 'pipes') {
+    ctx.lineWidth = Math.max(10, pr.s * 0.22);
+    ctx.strokeStyle = 'rgba(20, 22, 28, 0.85)';
+    ctx.lineJoin = 'round';
+    for (let i = 0; i < 3; i++) {
+      const x = pr.x + i * pr.s * 0.42;
+      const h = pr.s * (1.2 + (i % 2) * 0.55);
+      ctx.beginPath();
+      ctx.moveTo(x, pr.y);
+      ctx.lineTo(x, pr.y - h);
+      ctx.lineTo(x + pr.s * 0.45, pr.y - h);
+      ctx.stroke();
+    }
+  } else if (pr.type === 'tower') {
+    const w = pr.s * 0.7, h = pr.s * 2.6;
+    ctx.fillRect(pr.x - w / 2, pr.y - h, w, h);
+    ctx.beginPath();
+    ctx.moveTo(pr.x - w * 0.65, pr.y - h);
+    ctx.lineTo(pr.x, pr.y - h - pr.s * 0.7);
+    ctx.lineTo(pr.x + w * 0.65, pr.y - h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(160,190,205,0.18)';
+    for (let y = pr.y - h + pr.s * 0.45; y < pr.y - pr.s * 0.3; y += pr.s * 0.55) {
+      ctx.fillRect(pr.x - pr.s * 0.1, y, pr.s * 0.2, pr.s * 0.28);
+    }
+  } else if (pr.type === 'roots') {
+    ctx.strokeStyle = 'rgba(20, 22, 28, 0.85)';
+    ctx.lineWidth = Math.max(5, pr.s * 0.12);
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.moveTo(pr.x + (i - 2) * pr.s * 0.2, pr.y - pr.s * 1.8);
+      ctx.bezierCurveTo(pr.x + Math.sin(i) * pr.s, pr.y - pr.s,
+        pr.x - Math.cos(i * 2) * pr.s, pr.y - pr.s * 0.4,
+        pr.x + (i - 2) * pr.s * 0.35, pr.y);
+      ctx.stroke();
+    }
+  } else if (pr.type === 'reactor') {
+    ctx.translate(pr.x, pr.y);
+    ctx.strokeStyle = 'rgba(20, 22, 28, 0.85)';
+    for (let i = 1; i <= 3; i++) {
+      ctx.lineWidth = Math.max(4, pr.s * 0.12);
+      ctx.beginPath();
+      ctx.arc(0, 0, pr.s * i * 0.34, time * 0.12 * i, Math.PI * (1.35 + i * 0.18));
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(20, 22, 28, 0.85)';
+    ctx.beginPath();
+    ctx.arc(0, 0, pr.s * 0.2, 0, Math.PI * 2);
+    ctx.fill();
   }
   ctx.restore();
 }
@@ -168,16 +218,18 @@ export function drawAtmosphere(ctx, level, time) {
     ctx.restore();
   }
 
-  // ambijentalne čestice: listovi / pahulje / žar
+  // ambijentalne čestice: listovi / pahulje / žar / kiša / mehurići
   const kind = level.decor?.particles;
   if (kind) {
     ctx.save();
-    const n = 12;
+    const n = kind === 'rain' ? 30 : kind === 'bubbles' ? 18 : 12;
     for (let i = 0; i < n; i++) {
-      const fall = kind === 'embers' ? -28 - (i % 3) * 10 : 26 + (i % 4) * 9;
+      const rising = kind === 'embers' || kind === 'bubbles';
+      const fall = kind === 'rain' ? 250 + (i % 4) * 35
+        : rising ? -28 - (i % 3) * 10 : 26 + (i % 4) * 9;
       const spanY = WORLD.h + 60;
       let y = ((i * 173 + time * Math.abs(fall)) % spanY) - 30;
-      if (fall < 0) y = spanY - y - 60; // žar ide nagore
+      if (fall < 0) y = spanY - y - 60;
       const sway = Math.sin(time * (0.8 + (i % 3) * 0.3) + i * 2.1) * 26;
       let x = ((i * 337 + 60 + time * wind * 0.16) % (WORLD.w + 80)) + sway;
       if (x < -40) x += WORLD.w + 80;
@@ -198,13 +250,168 @@ export function drawAtmosphere(ctx, level, time) {
         ctx.beginPath();
         ctx.arc(x, y, 2.4 + (i % 3), 0, Math.PI * 2);
         ctx.fill();
-      } else { // embers
+      } else if (kind === 'rain') {
+        ctx.globalAlpha = 0.28 + (i % 3) * 0.08;
+        ctx.strokeStyle = '#c6e6ff';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + wind * 0.025, y + 18);
+        ctx.stroke();
+      } else if (kind === 'bubbles') {
+        ctx.globalAlpha = 0.22 + (i % 3) * 0.09;
+        ctx.strokeStyle = '#b8f2ef';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(x, y, 3 + (i % 4) * 1.5, 0, Math.PI * 2);
+        ctx.stroke();
+      } else { // žar
         ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 3 + i);
         ctx.fillStyle = i % 2 ? '#ff9b4a' : '#e2556a';
         ctx.beginPath();
         ctx.arc(x, y, 1.8 + (i % 2), 0, Math.PI * 2);
         ctx.fill();
       }
+    }
+    ctx.restore();
+  }
+}
+
+// Puzzle uređaji: lokalni ventilatori, prekidači, kapije i pokretne platforme.
+export function drawMechanisms(ctx, world, time) {
+  for (const fan of world.fans) drawFan(ctx, fan, time);
+
+  for (const mover of world.movers) {
+    const pl = mover.platform;
+    ctx.save();
+    const g = ctx.createLinearGradient(pl.x, pl.y, pl.x, pl.y + pl.h);
+    g.addColorStop(0, '#9caab2');
+    g.addColorStop(1, '#47545d');
+    ctx.fillStyle = g;
+    ctx.fillRect(pl.x, pl.y, pl.w, pl.h);
+    ctx.fillStyle = '#d8e2e6';
+    ctx.fillRect(pl.x, pl.y, pl.w, 5);
+    ctx.fillStyle = '#d89b3f';
+    for (let x = pl.x + 12; x < pl.x + pl.w - 6; x += 28) {
+      ctx.fillRect(x, pl.y + pl.h - 7, 15, 4);
+    }
+    ctx.restore();
+  }
+
+  for (const gate of world.gates) {
+    const pl = gate.platform;
+    ctx.save();
+    const g = ctx.createLinearGradient(pl.x, 0, pl.x + pl.w, 0);
+    g.addColorStop(0, '#303942');
+    g.addColorStop(0.5, '#7b8992');
+    g.addColorStop(1, '#303942');
+    ctx.fillStyle = g;
+    ctx.fillRect(pl.x, pl.y, pl.w, pl.h);
+    ctx.fillStyle = 'rgba(216,226,230,0.28)';
+    for (let y = pl.y + 16; y < pl.y + pl.h; y += 34) {
+      ctx.fillRect(pl.x + 6, y, pl.w - 12, 5);
+    }
+    ctx.fillStyle = gate.progress > 0.96 ? '#8ee36b' : '#e06a4e';
+    ctx.beginPath();
+    ctx.arc(pl.x + pl.w / 2, pl.y + 18, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  for (const sw of world.switches) {
+    ctx.save();
+    ctx.fillStyle = '#303942';
+    ctx.fillRect(sw.x - 5, sw.y - 4, sw.w + 10, 12);
+    ctx.fillStyle = sw.active ? '#8ee36b' : '#d86a4f';
+    const press = sw.pressed ? 3 : 0;
+    ctx.fillRect(sw.x, sw.y - 10 + press, sw.w, 8);
+    ctx.globalAlpha = sw.active ? 0.35 : 0.12;
+    ctx.fillRect(sw.x - 4, sw.y - 14, sw.w + 8, 16);
+    ctx.restore();
+  }
+}
+
+function drawFan(ctx, fan, time) {
+  const dx = fan.fx || 0, dy = fan.fy || 0;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = dx / len, ny = dy / len;
+  const cx = dx > 0 ? fan.x + 22 : dx < 0 ? fan.x + fan.w - 22 : fan.x + fan.w / 2;
+  const cy = dy > 0 ? fan.y + 22 : dy < 0 ? fan.y + fan.h - 22 : fan.y + fan.h / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(fan.x, fan.y, fan.w, fan.h);
+  ctx.clip();
+  ctx.strokeStyle = 'rgba(220,244,255,0.23)';
+  ctx.lineWidth = 2;
+  const travelSpan = Math.hypot(fan.w, fan.h) + 80;
+  for (let i = 0; i < 13; i++) {
+    const travel = ((time * len * 0.08 + i * 73) % travelSpan) - 40;
+    const cross = ((i * 97) % 240) - 120;
+    const x = cx + nx * travel - ny * cross;
+    const y = cy + ny * travel + nx * cross;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - nx * (32 + i % 3 * 14), y - ny * (32 + i % 3 * 14));
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = '#303942';
+  ctx.beginPath();
+  ctx.arc(0, 0, 27, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.rotate(time * 7 * (dx + dy >= 0 ? 1 : -1));
+  ctx.fillStyle = '#9caab2';
+  for (let i = 0; i < 4; i++) {
+    ctx.rotate(Math.PI / 2);
+    ctx.beginPath();
+    ctx.ellipse(10, 0, 15, 6, 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#d89b3f';
+  ctx.beginPath();
+  ctx.arc(0, 0, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// Voda menja uzgon, lava uništava kuglice i čvorove.
+export function drawLiquids(ctx, level, time) {
+  for (const liquid of level.liquids || []) {
+    ctx.save();
+    if (liquid.type === 'lava') {
+      const g = ctx.createLinearGradient(0, liquid.y, 0, liquid.y + liquid.h);
+      g.addColorStop(0, 'rgba(255,142,45,0.92)');
+      g.addColorStop(0.22, 'rgba(204,58,31,0.94)');
+      g.addColorStop(1, 'rgba(73,15,20,0.98)');
+      ctx.fillStyle = g;
+      ctx.fillRect(liquid.x, liquid.y, liquid.w, liquid.h);
+      ctx.fillStyle = '#ffd36a';
+      for (let i = 0; i < 10; i++) {
+        const x = liquid.x + ((i * 127 + time * (18 + i % 3 * 8)) % liquid.w);
+        const r = 3 + i % 4;
+        const y = liquid.y + 7 + Math.sin(time * 2.4 + i) * 4;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      const g = ctx.createLinearGradient(0, liquid.y, 0, liquid.y + liquid.h);
+      g.addColorStop(0, 'rgba(84,205,220,0.42)');
+      g.addColorStop(1, 'rgba(21,72,116,0.78)');
+      ctx.fillStyle = g;
+      ctx.fillRect(liquid.x, liquid.y, liquid.w, liquid.h);
+      ctx.strokeStyle = 'rgba(201,249,244,0.72)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let x = liquid.x; x <= liquid.x + liquid.w; x += 12) {
+        const y = liquid.y + Math.sin(x * 0.035 + time * 2.2) * 4;
+        if (x === liquid.x) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
     }
     ctx.restore();
   }

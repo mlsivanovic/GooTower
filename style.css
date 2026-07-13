@@ -77,8 +77,8 @@ html, body {
     border-radius: 18px;
     padding: 8px 20px;
     font-size: 16px;
-    animation: hint-fade 9s forwards;
 }
+#hint.show { animation: hint-fade 9s forwards; }
 @keyframes hint-fade {
     0%, 70% { opacity: 1; }
     100% { opacity: 0; visibility: hidden; }

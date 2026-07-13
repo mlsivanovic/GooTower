@@ -36,6 +36,17 @@ export const BALLOON = {
   attachReach: 150,     // dokle balon "vidi" čvor za kačenje
 };
 
+// Tečnosti i lokalne sile za puzzle nivoe.
+export const LIQUID = {
+  waterLift: 2350,      // uzgon u vodi (veći od gravitacije, pa konstrukcija pluta)
+  waterDrag: 0.90,      // prigušenje brzine po fizičkom podkoraku
+};
+
+export const MECHANISM = {
+  gateSpeed: 1.5,       // deo punog hoda kapije u sekundi
+  switchDepth: 34,      // koliko iznad ploče čvor/kuglica može da je aktivira
+};
+
 // Cev (cilj nivoa)
 export const PIPE = {
   activateRadius: 100,    // čvor konstrukcije u ovom radijusu aktivira cev
