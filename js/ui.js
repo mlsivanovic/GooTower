@@ -46,7 +46,8 @@ export const ui = {
       list.appendChild(head);
       for (let i = ch.from; i <= ch.to && i < LEVELS.length; i++) {
         const lv = LEVELS[i];
-        const locked = i + 1 > store.unlocked;
+        // prvi nivo svakog poglavlja je uvek otključan (i === ch.from)
+        const locked = i + 1 > store.unlocked && i !== ch.from;
         const btn = document.createElement('button');
         btn.className = 'level-card' + (locked ? ' locked' : '');
         const best = store.bestFor(lv.id);

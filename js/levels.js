@@ -105,13 +105,14 @@ export const LEVELS = [
   {
     id: 'duboki-kanjon',
     name: 'Duboki kanjon',
-    sub: 'Još širi jaz — i dve obale na različitoj visini.',
+    sub: 'Širok jaz — oslonac na steni po sredini pomaže.',
     decor: { sun: { x: 1060, y: 110, warm: true }, clouds: 2, props: [{ type: 'ruin', x: 1130, y: 620, s: 60 }] },
     required: 8,
-    total: 20,
+    total: 22,
     platforms: [
       { x: -200, y: 560, w: 560, h: 380 },   // leva, viša obala (do x=360)
       { x: 920, y: 620, w: 560, h: 300 },    // desna, niža obala (od x=920)
+      { x: 560, y: 585, w: 150, h: 360 },    // stena-oslonac na sredini jaza
     ],
     killY: 900,
     pipe: { x: 990, y: 560, dir: 'left' },
@@ -180,16 +181,18 @@ export const LEVELS = [
   {
     id: 'veliki-ambis',
     name: 'Veliki ambis',
-    sub: 'Najširi ponor i cev visoko. Ni jedna kap suvišna.',
+    sub: 'Najširi ponor — skači sa stene na stenu do cevi.',
     decor: { sun: null, particles: 'embers', props: [{ type: 'ruin', x: 120, y: 590, s: 55 }] },
-    required: 11,
-    total: 20,
+    required: 12,
+    total: 26,
     platforms: [
       { x: -200, y: 600, w: 540, h: 320 },   // leva ivica (do x=340)
       { x: 940, y: 600, w: 540, h: 320 },    // desna ivica (od x=940)
+      { x: 490, y: 560, w: 100, h: 400 },    // stena-oslonac 1
+      { x: 690, y: 560, w: 100, h: 400 },    // stena-oslonac 2
     ],
     killY: 900,
-    pipe: { x: 995, y: 445, dir: 'left' },
+    pipe: { x: 995, y: 520, dir: 'left' },
     initial: {
       nodes: [[190, 586], [310, 586], [250, 482]],
       struts: [[0, 1], [0, 2], [1, 2]],
