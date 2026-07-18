@@ -1,4 +1,4 @@
-const CACHE_NAME = 'goo-tower-v8';
+const CACHE_NAME = 'goo-tower-v9';
 
 // Obavezni resursi — keširaju se atomično pri instalaciji.
 const CORE = [

@@ -10,7 +10,7 @@ Fizička puzla inspirisana igrom **World of Goo**, napisana u čistom (vanilla) 
 
 ## ✨ Mogućnosti
 
-- 🧩 **33 nivoa u 4 poglavlja** (*Zelena brda → Mašine i vetrovi → Put u nebo → Dubine i mehanizmi*) — rastuća težina i originalne fizičke puzle inspirisane najboljim idejama žanra
+- 🧩 **39 nivoa u 5 poglavlja** (*Zelena brda → Mašine i vetrovi → Put u nebo → Dubine i mehanizmi → Iznad oblaka*) — rastuća težina i originalne fizičke puzle inspirisane najboljim idejama žanra
 - 🕸️ **Verlet fizika** — grede su namerno „meke" (elastičan solver) pa se konstrukcija ljulja i uvija kao u originalu
 - 🫧 **Živa goo kuglica** — kuglice šetaju po gredama, trepću, prate kursor pogledom i cvile kad ih uhvatiš
 - 🎈 **Baloni** — kače se kanapom i dižu konstrukciju; cev ih ne usisava, a šiljci ih buše (kao u originalu)
